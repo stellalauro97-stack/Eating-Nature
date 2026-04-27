@@ -96,7 +96,7 @@ CFs_occ_long <- CFs_occ_long[,-2]
 
 #5. Merge the dataset
 
-#Correct the keys for which the merge didn't work
+#Correct the keys for the merge function
 #a. Brunei Darussalam, Czech Republic, Congo DRC, Mexico, The Former Yugoslav Republic of Macedonia, Congo, Russian Federation, Sao Tome and Principe in CFs
 #transformation
 CFs_transf_long <- CFs_transf_long %>%
