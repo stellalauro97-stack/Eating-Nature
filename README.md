@@ -3,16 +3,13 @@ This repository contains the R code used to compute the Biodiversity Risk indica
 Lauro et al. (2026), Eating Nature: Revealing the Ecological Cost of Food Trade through a Global Biodiversity-Risk Footprint.
 
 **Repository contents**
+
 Biodiversity_Footprint.R
 R script to compute Biodiversity Risk for 176 countries and 184 commodities over the period 2005–2022.
 
-commodities.xlsx
-List of commodities included in the analysis and their corresponding crop types. Crop type is used to merge commodity data with characterization factors from LC-IMPACT.
-
-CFs_land_use_average.xlsx
-Characterization factors for land-use stress (average values) from LC-IMPACT v1.3 (Verones et al., 2020).
 
 **Input and output data**
+
 Due to file size and licensing constraints, input and output datasets are archived on Zenodo:
 
 Deforestation Footprint data
