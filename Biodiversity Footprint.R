@@ -2,20 +2,18 @@
 library(dplyr)
 library(tidyr)
 library(writexl)
+library(countrycode)
+library(readxl)
 
 setwd("")
 getwd()
 
 #1. Upload data from Singh and Persson (2024)
 #Trade flow - physical
-Deforestation <- read_excel("Singh and Persson (2024)/Singh et al 2024 - Commodity-driven deforestation, carbon emissions & trade 2001-2022.xlsx", 
+Deforestation <- read_excel("Singh et al 2024 - Commodity-driven deforestation, carbon emissions & trade 2001-2022.xlsx", 
                                                                                                sheet = "Trade flows-physical")
 
-#2. Extract the commodity list to write on excel the corresponding land-use type (from FAO)
-commodities <- unique(Deforestation$Commodity)
-commodities <- data.frame(Commodity = commodities)
-
-#3. Upload the commodity list and merge it with the DF data
+#2. Upload the commodity list and merge it with the DF data
 #Clean the commodity data
 commodities <- read_excel("commodities.xlsx")
 
@@ -24,12 +22,12 @@ commodities <- commodities %>% dplyr::select(-c(`Group name`, Note))
 Deforestation <- Deforestation %>%
   left_join(commodities, by = "Commodity")
 
-#4. Compute the total deforested land in the 5 years prior to attribution to compute the occupation impact oon biodiversity
+#3. Compute the total deforested land in the 5 years prior to attribution to compute the occupation impact oon biodiversity
 Deforestation$OccupiedLand <- Deforestation$`Deforestation risk (ha)` * 5
 
-#5. Upload CF data
+#4. Upload CF data
 #Clean the dataset for transformation
-CFs_transf_average <- read_excel("Verones et al. (2020)/CFs_land_Use_average.xlsx", 
+CFs_transf_average <- read_excel("CFs_land_Use_average.xlsx", 
                                    sheet = "transf. avg country 100y", skip = 1)
 
 CFs_transf_average <- CFs_transf_average %>% rename(Country = ...1, `Annual crops median` = `Annual crops`, `Annual crops lower 95%` = ...3, `Annual crops upper 95%` = ...4, `Permanent crops median` = `Permanent crops`, `Permanent crops lower 95%` = ...6, `Permanent crops upper 95%` = ...7, `Pasture median` = Pasture, `Pasture lower 95%` = ...9, `Pasture upper 95%` = ...10)
@@ -62,7 +60,7 @@ CFs_transf_long <- CFs_transf_average %>%
 CFs_transf_long <- CFs_transf_long[,-2]
 
 #Clean the dataset for occupation
-CFs_occ_average <- read_excel("Verones et al. (2020)/CFs_land_Use_average.xlsx", 
+CFs_occ_average <- read_excel("CFs_land_Use_average.xlsx", 
                                  sheet = "occupation average country", skip = 1)
 
 CFs_occ_average <- CFs_occ_average %>% rename(Country = ...1, `Annual crops median` = `Annual crops`, `Annual crops lower 95%` = ...3, `Annual crops upper 95%` = ...4, `Permanent crops median` = `Permanent crops`, `Permanent crops lower 95%` = ...6, `Permanent crops upper 95%` = ...7, `Pasture median` = Pasture, `Pasture lower 95%` = ...9, `Pasture upper 95%` = ...10)
@@ -97,58 +95,25 @@ CFs_occ_long <- CFs_occ_long[,-2]
 #5. Merge the dataset
 
 #Correct the keys for the merge function
-#a. Brunei Darussalam, Czech Republic, Congo DRC, Mexico, The Former Yugoslav Republic of Macedonia, Congo, Russian Federation, Sao Tome and Principe in CFs
-#transformation
-CFs_transf_long <- CFs_transf_long %>%
-  mutate(Country = ifelse(Country == "Brunei Darussalam", "Brunei", Country))
+# a. Harmonize country names in CFs
+cf_name_recode <- c(
+  "Brunei Darussalam" = "Brunei",
+  "Czech Republic" = "Czechia",
+  "Congo DRC" = "Democratic Republic of the Congo",
+  "Mexico" = "México",
+  "The Former Yugoslav Republic of Macedonia" = "North Macedonia",
+  "Congo" = "Republic of the Congo",
+  "Russian Federation" = "Russia",
+  "Sao Tome and Principe" = "São Tomé and Príncipe"
+)
 
 CFs_transf_long <- CFs_transf_long %>%
-  mutate(Country = ifelse(Country == "Czech Republic", "Czechia", Country))
-
-CFs_transf_long <- CFs_transf_long %>%
-  mutate(Country = ifelse(Country == "Congo DRC", "Democratic Republic of the Congo", Country))
-
-CFs_transf_long <- CFs_transf_long %>%
-  mutate(Country = ifelse(Country == "Mexico", "México", Country))
-
-CFs_transf_long <- CFs_transf_long %>%
-  mutate(Country = ifelse(Country == "The Former Yugoslav Republic of Macedonia", "North Macedonia", Country))
-
-CFs_transf_long <- CFs_transf_long %>%
-  mutate(Country = ifelse(Country == "Congo", "Republic of the Congo", Country))
-
-CFs_transf_long <- CFs_transf_long %>%
-  mutate(Country = ifelse(Country == "Russian Federation", "Russia", Country))
-
-CFs_transf_long <- CFs_transf_long %>%
-  mutate(Country = ifelse(Country == "Sao Tome and Principe", "São Tomé and Príncipe", Country))
-
-#occupation
-CFs_occ_long <- CFs_occ_long %>%
-  mutate(Country = ifelse(Country == "Brunei Darussalam", "Brunei", Country))
+  mutate(Country = recode(Country, !!!cf_name_recode))
 
 CFs_occ_long <- CFs_occ_long %>%
-  mutate(Country = ifelse(Country == "Czech Republic", "Czechia", Country))
+  mutate(Country = recode(Country, !!!cf_name_recode))
 
-CFs_occ_long <- CFs_occ_long %>%
-  mutate(Country = ifelse(Country == "Congo DRC", "Democratic Republic of the Congo", Country))
-
-CFs_occ_long <- CFs_occ_long %>%
-  mutate(Country = ifelse(Country == "Mexico", "México", Country))
-
-CFs_occ_long <- CFs_occ_long %>%
-  mutate(Country = ifelse(Country == "The Former Yugoslav Republic of Macedonia", "North Macedonia", Country))
-
-CFs_occ_long <- CFs_occ_long %>%
-  mutate(Country = ifelse(Country == "Congo", "Republic of the Congo", Country))
-
-CFs_occ_long <- CFs_occ_long %>%
-  mutate(Country = ifelse(Country == "Russian Federation", "Russia", Country))
-
-CFs_occ_long <- CFs_occ_long %>%
-  mutate(Country = ifelse(Country == "Sao Tome and Principe", "São Tomé and Príncipe", Country))
-
-#b. Missing in CF: Cabo verde
+# b. Missing in CF: Cabo Verde
 
 #c. Serbia and Montenegro, and Sudan and South Sudan are togheter in the Singh and Persson dataset
 #c.1 Compute average for Serbia and Montenegro
@@ -237,74 +202,52 @@ Deforestation$BR_trans_avg <- Deforestation$`Deforestation risk (m2)`*Deforestat
 Deforestation$BR_occ_avg <- Deforestation$`OccupiedLand (m2)`*Deforestation$`CF occ avg`
 Deforestation$BR_total <- Deforestation$BR_trans_avg + Deforestation$BR_occ_avg
 
-#7. Merge the dataset with ISO3 code from FAOSTAT
-Country.Code <- read.csv("~/Desktop/Ricerche/Colonial Origin/FAOSTAT/Trade_DetailedTradeMatrix_E_All_Data/Country Code.csv")
-Country.Code <- Country.Code %>% dplyr::select(Country, ISO3.Code) %>%
-  distinct()
-
-#Correct the country names in Country.Code
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Bolivia (Plurinational State of)", "Bolivia", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Brunei Darussalam", "Brunei", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Iran (Islamic Republic of)", "Iran", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Lao People's Democratic Republic", "Laos", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Mexico", "México", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Republic of Moldova", "Moldova", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Netherlands (Kingdom of the)", "Netherlands", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Democratic People's Republic of Korea", "North Korea", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Congo", "Republic of the Congo", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Russian Federation", "Russia", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Sao Tome and Principe", "São Tomé and Príncipe", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Republic of Korea", "South Korea", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Eswatini", "Swaziland", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Syrian Arab Republic", "Syria", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "United Republic of Tanzania", "Tanzania", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Türkiye", "Turkey", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "United Kingdom of Great Britain and Northern Ireland", "United Kingdom", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "United States of America", "United States", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Venezuela (Bolivarian Republic of)", "Venezuela", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Viet Nam", "Vietnam", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "China, Taiwan Province of", "Taiwan", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Micronesia (Federated States of)", "Micronesia", Country))
-Country.Code <- Country.Code %>%
-  mutate(Country = ifelse(Country == "Micronesia (Federated States of)", "Micronesia", Country))
+#7. Add ISO3 codes directly with countrycode
+iso_custom_match <- c(
+  "Bolivia" = "BOL",
+  "Brunei" = "BRN",
+  "China, mainland" = "CHN",
+  "Iran" = "IRN",
+  "Laos" = "LAO",
+  "México" = "MEX",
+  "Moldova" = "MDA",
+  "Netherlands" = "NLD",
+  "North Korea" = "PRK",
+  "Republic of the Congo" = "COG",
+  "Russia" = "RUS",
+  "São Tomé and Príncipe" = "STP",
+  "South Korea" = "KOR",
+  "Swaziland" = "SWZ",
+  "Syria" = "SYR",
+  "Tanzania" = "TZA",
+  "Turkey" = "TUR",
+  "United Kingdom" = "GBR",
+  "United States" = "USA",
+  "Venezuela" = "VEN",
+  "Vietnam" = "VNM",
+  "Taiwan" = "TWN",
+  "Micronesia" = "FSM"
+)
 
 Deforestation <- Deforestation %>%
-  mutate(`Producer country` = ifelse(`Producer country` == "China", "China, mainland", `Producer country`))
-Deforestation <- Deforestation %>%
-  mutate(`Consumer country` = ifelse(`Consumer country` == "China", "China, mainland", `Consumer country`))
+  mutate(
+    `Producer ISO` = countrycode(
+      `Producer country`,
+      origin = "country.name",
+      destination = "iso3c",
+      custom_match = iso_custom_match,
+      warn = TRUE
+    ),
+    `Consumer ISO` = countrycode(
+      `Consumer country`,
+      origin = "country.name",
+      destination = "iso3c",
+      custom_match = iso_custom_match,
+      warn = TRUE
+    )
+  )
 
-#Join the datasets
-Deforestation <- Deforestation %>%
-  left_join(Country.Code, by = c("Producer country" = "Country")) %>%
-  rename("Producer ISO" = ISO3.Code)
-
-Deforestation <- Deforestation %>%
-  left_join(Country.Code, by = c("Consumer country" = "Country")) %>%
-  rename("Consumer ISO" = ISO3.Code)
-
-#Check if the merge didn't happen for some values
+# Check if the conversion didn't happen for some values
 Deforestation %>%
   filter(is.na(`Producer ISO`)) %>%
   distinct(`Producer country`) %>%
@@ -315,8 +258,7 @@ Deforestation %>%
   distinct(`Consumer country`) %>%
   slice_head(n = 22)
 
-
-#Deal with aggregated countries
+# Deal with aggregated countries
 Deforestation <- Deforestation %>%
   mutate(
     `Producer ISO` = case_when(
