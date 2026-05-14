@@ -5,7 +5,7 @@ Lauro et al. (2026), Eating Nature: Revealing the Ecological Cost of Food Trade 
 **Repository contents**
 
 Biodiversity_Footprint.R
-R script to compute Biodiversity Risk for 176 countries and 184 commodities over the period 2005–2022.
+R script to compute Biodiversity Risk for 195 consumption countries and 157 commodities over the period 2005–2022.
 
 
 **Input and output data**
